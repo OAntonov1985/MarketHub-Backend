@@ -94,4 +94,25 @@ app.get('/categorie/:categoryId', (req, res) => {
         })
 });
 
+app.get('/goods/:goodId', (req, res) => {
+    const goodId = req.params.goodId;
+    console.log(goodId)
+
+    db
+        .collection('goods')
+        .findOne({ id: goodId })
+        .then((good) => {
+            if (good) {
+                res.status(200).json(good);
+            } else {
+                res.status(404).json({ error: "Товару не знайдено" });
+            }
+        })
+        .catch(() => {
+            res
+                .status(500)
+                .json({ error: "Упс... Щось пішло не так..." })
+        })
+});
+
 
