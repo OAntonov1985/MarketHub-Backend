@@ -1,10 +1,12 @@
 const express = require("express");
 const { connectToDb, getDb } = require('./db');
+const cors = require("cors");
 
 const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 let db;
 
@@ -123,7 +125,7 @@ app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
     const skip = parseInt(req.params.skip * pageSize);
     const limit = parseInt(req.params.limit);
 
-    const totalQuery = db.collection('goods').find({ "category_details.id": categoryId }).count();
+    const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
     const dataQuery = db.collection('goods')
         .find({ "category_details.id": categoryId })
         .skip(skip)
