@@ -201,10 +201,9 @@ app.get('/goods/categories/:categoryId/:sortIndex/:skip/:limit', (req, res) => {
 });
 
 /////////// Сортування для обраної категорії  по ціні (новинки) ///////////
-app.get('/goods/categories/:categoryId/:sortId/:skip/:limit', (req, res) => {
-    const dataArray = [];
-    console.log(req.params.novelty)
-    const sortId = req.params.novelty;
+app.get('/newgoods/categories/:categoryId/:sortId/:skip/:limit', (req, res) => {
+    const categoryId = req.params.categoryId;
+    const sortId = req.params.sortId;
     const skip = parseInt(req.params.skip * 12);
     const limit = parseInt(req.params.limit);
 
