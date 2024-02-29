@@ -117,32 +117,33 @@ app.get('/goods/:goodId', (req, res) => {
         })
 });
 
-app.get('/goods/categories/:categoryId', (req, res) => {
-    const dataArray = [];
+app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
+    const pageSize = 12;
     const categoryId = req.params.categoryId;
+    const skip = parseInt(req.params.skip * pageSize);
+    const limit = parseInt(req.params.limit);
 
-
-    db
-        .collection('ComputerEngineering')
+    const totalQuery = db.collection('goods').find({ "category_details.id": categoryId }).count();
+    const dataQuery = db.collection('goods')
         .find({ "category_details.id": categoryId })
-        .forEach((item) => dataArray.push(item))
-        .then(() => {
-            res
-                .status(200)
-                .json(dataArray);
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
         })
-        .catch(() => {
-            res
-                .status(500)
-                .json({ error: "Упс... Щось пішло не так..." })
-        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
 });
 
 
 app.get('/goods/subcategories/:subCategoryId', (req, res) => {
     const dataArray = [];
     const subCategoryId = req.params.subCategoryId;
-    console.log(req.params)
+
 
 
     db
