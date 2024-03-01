@@ -153,25 +153,27 @@ app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
         });
 });
 
-/////////// Пагінація для обраної категорії  ///////////
-app.get('/goods/subcategories/:subCategoryId', (req, res) => {
-    const dataArray = [];
+/////////// Пагінація для обраної підкатегорії  ///////////
+app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
+    const pageSize = 12;
     const subCategoryId = req.params.subCategoryId;
+    const skip = parseInt(req.params.skip * pageSize);
+    const limit = parseInt(req.params.limit);
 
-    db
-        .collection('goods')
+    const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
+    const dataQuery = db.collection('goods')
         .find({ "sub_category_detail.id": subCategoryId })
-        .forEach((item) => dataArray.push(item))
-        .then(() => {
-            res
-                .status(200)
-                .json(dataArray);
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
         })
-        .catch(() => {
-            res
-                .status(500)
-                .json({ error: "Упс... Щось пішло не так..." })
-        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
 });
 
 /////////// Сортування для обраної категорії  по ціні (більше менше) ///////////
