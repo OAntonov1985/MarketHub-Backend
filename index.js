@@ -49,8 +49,10 @@ app.get('/categories', (req, res) => {
 app.get('/goods/top-sellers', (req, res) => {
     const goods = [];
     db
-        .collection('topSellers')
+        .collection('goods')
         .find()
+        .limit(4)
+        .sort({ "how_many_solds": -1 })
         .forEach((item) => goods.push(item))
         .then(() => {
             res
