@@ -107,6 +107,29 @@ app.get('/categorie/:categoryId', (req, res) => {
         })
 });
 
+/////////// Товари в підкатегорії  ///////////
+app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
+    const pageSize = 12;
+    const subCategoryId = req.params.subCategoryId;
+    const skip = parseInt(req.params.skip * pageSize);
+    const limit = parseInt(req.params.limit);
+
+    const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
+    const dataQuery = db.collection('goods')
+        .find({ "sub_category_detail.id": subCategoryId })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
+        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
+
 
 /////////// Отримання товару по ID ///////////
 app.get('/goods/:goodId', (req, res) => {
