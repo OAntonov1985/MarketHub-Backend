@@ -153,6 +153,51 @@ app.get('/goods/:goodId', (req, res) => {
         })
 });
 
+/////////// Отримання списку брендів категорій ///////////
+app.get('/goods/caregoriebrand/:categoryId', (req, res) => {
+    const dataArray = [];
+    const categoryId = req.params.categoryId;
+
+    db
+        .collection('goods')
+        .find({ "category_details.id": categoryId })
+        .forEach((item) => dataArray.push(item.brend))
+        .then(() => {
+            const newArr = [...new Set(dataArray)];
+            res
+                .status(200)
+                .json(newArr);
+        })
+        .catch(() => {
+            res
+                .status(500)
+                .json({ error: "Упс... Щось пішло не так..." })
+        })
+});
+
+/////////// Отримання списку брендів субкатегорій ///////////
+app.get('/goods/subcaregoriebrand/:subCategoryId', (req, res) => {
+    const dataArray = [];
+    const subCategoryId = req.params.subCategoryId;
+    // console.log(subCategoryId)
+
+    db
+        .collection('goods')
+        .find({ "sub_category_detail.id": subCategoryId })
+        .forEach((item) => dataArray.push(item.brend))
+        .then(() => {
+            // console.log(dataArray)
+            const newArr = [...new Set(dataArray)];
+            res
+                .status(200)
+                .json(newArr);
+        })
+        .catch(() => {
+            res
+                .status(500)
+                .json({ error: "Упс... Щось пішло не так..." })
+        })
+});
 
 
 /////////// Пагінація для обраної категорії ///////////
