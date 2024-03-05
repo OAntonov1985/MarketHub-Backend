@@ -266,58 +266,58 @@ app.get('/goods/subcategories/:subCategoryId', async (req, res) => {
 
 
 
+/////////// Отримання товарів в категорії звичайне///////////
+app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
+    const pageSize = 12;
+    const categoryId = req.params.categoryId;
+    const skip = parseInt(req.params.skip * pageSize);
+    const limit = parseInt(req.params.limit);
 
-// app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
-//     const pageSize = 12;
-//     const categoryId = req.params.categoryId;
-//     const skip = parseInt(req.params.skip * pageSize);
-//     const limit = parseInt(req.params.limit);
+    const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
+    const dataQuery = db.collection('goods')
+        .find({ "category_details.id": categoryId })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
-//     const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
-//     const dataQuery = db.collection('goods')
-//         .find({ "category_details.id": categoryId })
-//         .skip(skip)
-//         .limit(limit)
-//         .toArray();
-
-//     Promise.all([totalQuery, dataQuery])
-//         .then(([total, data]) => {
-//             res.status(200).json({ total, data });
-//         })
-//         .catch((error) => {
-//             res.status(500).json({ error: "Упс... Щось пішло не так..." });
-//         });
-// });
-
-
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
+        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
 
 
 
 
-// /////////// Сортуванн для обраної підкатегорії  по ціні (більше менше)///////////
-// app.get('/goods/subcategories/:subCategoryId/:sortIndex/:skip/:limit', (req, res) => {
-//     const pageSize = 12;
-//     const subCategoryId = req.params.subCategoryId;
-//     const sortIndex = parseInt(req.params.sortIndex);
-//     const skip = parseInt(req.params.skip * pageSize);
-//     const limit = parseInt(req.params.limit);
 
-//     const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
-//     const dataQuery = db.collection('goods')
-//         .find({ "sub_category_detail.id": subCategoryId })
-//         .sort({ price: sortIndex })
-//         .skip(skip)
-//         .limit(limit)
-//         .toArray();
 
-//     Promise.all([totalQuery, dataQuery])
-//         .then(([total, data]) => {
-//             res.status(200).json({ total, data });
-//         })
-//         .catch((error) => {
-//             res.status(500).json({ error: "Упс... Щось пішло не так..." });
-//         });
-// });
+// /////////// Отримання товарів в підкатегорії звичайне///////////
+app.get('/goods/subcategories/:subCategoryId/:sortIndex/:skip/:limit', (req, res) => {
+    const pageSize = 12;
+    const subCategoryId = req.params.subCategoryId;
+    const sortIndex = parseInt(req.params.sortIndex);
+    const skip = parseInt(req.params.skip * pageSize);
+    const limit = parseInt(req.params.limit);
+
+    const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
+    const dataQuery = db.collection('goods')
+        .find({ "sub_category_detail.id": subCategoryId })
+        .sort({ price: sortIndex })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
+        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
 
 // /////////// Сортування для обраної категорії  по ціні (більше менше) ///////////
 // app.get('/goods/categories/:categoryId/:sortIndex/:skip/:limit', (req, res) => {
