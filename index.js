@@ -295,17 +295,15 @@ app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
 
 
 // /////////// Отримання товарів в підкатегорії звичайне///////////
-app.get('/goods/subcategories/:subCategoryId/:sortIndex/:skip/:limit', (req, res) => {
+app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
     const pageSize = 12;
     const subCategoryId = req.params.subCategoryId;
-    const sortIndex = parseInt(req.params.sortIndex);
     const skip = parseInt(req.params.skip * pageSize);
     const limit = parseInt(req.params.limit);
 
     const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
     const dataQuery = db.collection('goods')
         .find({ "sub_category_detail.id": subCategoryId })
-        .sort({ price: sortIndex })
         .skip(skip)
         .limit(limit)
         .toArray();
