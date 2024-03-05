@@ -86,7 +86,7 @@ app.get('/sales', (req, res) => {
         })
 });
 
-/////////// Підкатегорії на головній ///////////
+/////////// Підкатегорії на сторінці категорії ///////////
 app.get('/categorie/:categoryId', (req, res) => {
     const dataArray = [];
     const categoryId = req.params.categoryId;
@@ -99,52 +99,6 @@ app.get('/categorie/:categoryId', (req, res) => {
             res
                 .status(200)
                 .json(dataArray);
-        })
-        .catch(() => {
-            res
-                .status(500)
-                .json({ error: "Упс... Щось пішло не так..." })
-        })
-});
-
-/////////// Товари в підкатегорії  ///////////
-app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
-    const pageSize = 12;
-    const subCategoryId = req.params.subCategoryId;
-    const skip = parseInt(req.params.skip * pageSize);
-    const limit = parseInt(req.params.limit);
-
-    const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
-    const dataQuery = db.collection('goods')
-        .find({ "sub_category_detail.id": subCategoryId })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
-
-    Promise.all([totalQuery, dataQuery])
-        .then(([total, data]) => {
-            res.status(200).json({ total, data });
-        })
-        .catch((error) => {
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-        });
-});
-
-
-/////////// Отримання товару по ID ///////////
-app.get('/goods/:goodId', (req, res) => {
-    const goodId = req.params.goodId;
-
-
-    db
-        .collection('goods')
-        .findOne({ id: goodId })
-        .then((good) => {
-            if (good) {
-                res.status(200).json(good);
-            } else {
-                res.status(404).json({ error: "Товару не знайдено" });
-            }
         })
         .catch(() => {
             res
@@ -167,6 +121,28 @@ app.get('/goods/caregoriebrand/:categoryId', (req, res) => {
             res
                 .status(200)
                 .json(newArr);
+        })
+        .catch(() => {
+            res
+                .status(500)
+                .json({ error: "Упс... Щось пішло не так..." })
+        })
+});
+
+/////////// Отримання товару по ID ///////////
+app.get('/goods/:goodId', (req, res) => {
+    const goodId = req.params.goodId;
+
+
+    db
+        .collection('goods')
+        .findOne({ id: goodId })
+        .then((good) => {
+            if (good) {
+                res.status(200).json(good);
+            } else {
+                res.status(404).json({ error: "Товару не знайдено" });
+            }
         })
         .catch(() => {
             res
@@ -199,103 +175,198 @@ app.get('/goods/subcaregoriebrand/:subCategoryId', (req, res) => {
         })
 });
 
-
-/////////// Пагінація для обраної категорії ///////////
-app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
+/////////// Отримання товарів в категорії з можливістю фільтрації ///////////
+app.get('/goods/categories/:categoryId', async (req, res) => {
     const pageSize = 12;
     const categoryId = req.params.categoryId;
-    const skip = parseInt(req.params.skip * pageSize);
-    const limit = parseInt(req.params.limit);
+    const sortIndex = req.query.sortIndex === '1' ? 1 : req.query.sortIndex === '-1' ? -1 : null;
+    const skip = parseInt(req.query.skip) * pageSize || 0;
+    const limit = parseInt(req.query.limit) || 12;
 
-    const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
-    const dataQuery = db.collection('goods')
-        .find({ "category_details.id": categoryId })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
+    try {
+        const min = req.query.min ? parseInt(req.query.min) : null;
+        const max = req.query.max ? parseInt(req.query.max) : null;
+        let brands = req.query.brend ? Array.isArray(req.query.brend) ? req.query.brend : [req.query.brend] : [];
 
-    Promise.all([totalQuery, dataQuery])
-        .then(([total, data]) => {
-            res.status(200).json({ total, data });
-        })
-        .catch((error) => {
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-        });
+        const filter = { "category_details.id": categoryId };
+        if (min !== null || max !== null) {
+            filter.price = {};
+            if (min !== null) filter.price.$gte = min;
+            if (max !== null) filter.price.$lte = max;
+        }
+        if (brands.length > 0) {
+            filter.$and = [
+                { "brend": { $in: brands } }
+            ];
+        }
+
+        const sort = sortIndex ? { price: sortIndex } : null;
+
+        const total = await db.collection('goods').countDocuments(filter);
+
+        const data = await db.collection('goods')
+            .find(filter)
+            .sort(sort)
+            .skip(skip)
+            .limit(limit)
+            .toArray();
+
+        res.status(200).json({ total, data });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Упс... Щось пішло не так..." });
+    }
 });
 
-/////////// Пагінація для обраної підкатегорії  ///////////
-app.get('/goods/subcategories/:subCategoryId/:sortIndex/:skip/:limit', (req, res) => {
+
+/////////// Отримання товарів в підкатегорії з можливістю фільтрації///////////
+app.get('/goods/subcategories/:subCategoryId', async (req, res) => {
     const pageSize = 12;
     const subCategoryId = req.params.subCategoryId;
-    const sortIndex = parseInt(req.params.sortIndex);
-    const skip = parseInt(req.params.skip * pageSize);
-    const limit = parseInt(req.params.limit);
+    const sortIndex = req.query.sortIndex === '1' ? 1 : req.query.sortIndex === '-1' ? -1 : null;
+    const skip = parseInt(req.query.skip) * pageSize || 0;
+    const limit = parseInt(req.query.limit) || 12;
 
-    const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
-    const dataQuery = db.collection('goods')
-        .find({ "sub_category_detail.id": subCategoryId })
-        .sort({ price: sortIndex })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
+    try {
+        const min = req.query.min ? parseInt(req.query.min) : null;
+        const max = req.query.max ? parseInt(req.query.max) : null;
+        let brands = req.query.brend ? Array.isArray(req.query.brend) ? req.query.brend : [req.query.brend] : [];
 
-    Promise.all([totalQuery, dataQuery])
-        .then(([total, data]) => {
-            res.status(200).json({ total, data });
-        })
-        .catch((error) => {
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-        });
+        const filter = { "sub_category_detail.id": subCategoryId };
+        if (min !== null || max !== null) {
+            filter.price = {};
+            if (min !== null) filter.price.$gte = min;
+            if (max !== null) filter.price.$lte = max;
+        }
+        if (brands.length > 0) {
+            filter.$and = [
+                { "brend": { $in: brands } }
+            ];
+        }
+
+        const sort = sortIndex ? { price: sortIndex } : null;
+
+        const total = await db.collection('goods').countDocuments(filter);
+
+        const data = await db.collection('goods')
+            .find(filter)
+            .sort(sort)
+            .skip(skip)
+            .limit(limit)
+            .toArray();
+
+        res.status(200).json({ total, data });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Упс... Щось пішло не так..." });
+    }
 });
 
-/////////// Сортування для обраної категорії  по ціні (більше менше) ///////////
-app.get('/goods/categories/:categoryId/:sortIndex/:skip/:limit', (req, res) => {
-    const categoryId = req.params.categoryId;
-    const sortIndex = parseInt(req.params.sortIndex);
-    const skip = parseInt(req.params.skip * 12);
-    const limit = parseInt(req.params.limit);
 
 
-    const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
-    const dataQuery = db.collection('goods')
-        .find({ "category_details.id": categoryId })
-        .sort({ price: sortIndex })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
 
-    Promise.all([totalQuery, dataQuery])
-        .then(([total, data]) => {
-            res.status(200).json({ total, data });
-        })
-        .catch((error) => {
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-        });
 
-});
 
-/////////// Сортування для обраної категорії  по ціні (новинки) ///////////
-app.get('/newgoods/categories/:categoryId/:sortId/:skip/:limit', (req, res) => {
-    const categoryId = req.params.categoryId;
-    const sortId = req.params.sortId;
-    const skip = parseInt(req.params.skip * 12);
-    const limit = parseInt(req.params.limit);
+// app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
+//     const pageSize = 12;
+//     const categoryId = req.params.categoryId;
+//     const skip = parseInt(req.params.skip * pageSize);
+//     const limit = parseInt(req.params.limit);
 
-    const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
-    const dataQuery = db.collection('goods')
-        .find({ "category_details.id": categoryId })
-        .sort({ "create_at": sortId })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
+//     const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
+//     const dataQuery = db.collection('goods')
+//         .find({ "category_details.id": categoryId })
+//         .skip(skip)
+//         .limit(limit)
+//         .toArray();
 
-    Promise.all([totalQuery, dataQuery])
-        .then(([total, data]) => {
-            res.status(200).json({ total, data });
-        })
-        .catch((error) => {
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-        });
-});
+//     Promise.all([totalQuery, dataQuery])
+//         .then(([total, data]) => {
+//             res.status(200).json({ total, data });
+//         })
+//         .catch((error) => {
+//             res.status(500).json({ error: "Упс... Щось пішло не так..." });
+//         });
+// });
+
+
+
+
+
+
+// /////////// Сортуванн для обраної підкатегорії  по ціні (більше менше)///////////
+// app.get('/goods/subcategories/:subCategoryId/:sortIndex/:skip/:limit', (req, res) => {
+//     const pageSize = 12;
+//     const subCategoryId = req.params.subCategoryId;
+//     const sortIndex = parseInt(req.params.sortIndex);
+//     const skip = parseInt(req.params.skip * pageSize);
+//     const limit = parseInt(req.params.limit);
+
+//     const totalQuery = db.collection('goods').countDocuments({ "sub_category_detail.id": subCategoryId });
+//     const dataQuery = db.collection('goods')
+//         .find({ "sub_category_detail.id": subCategoryId })
+//         .sort({ price: sortIndex })
+//         .skip(skip)
+//         .limit(limit)
+//         .toArray();
+
+//     Promise.all([totalQuery, dataQuery])
+//         .then(([total, data]) => {
+//             res.status(200).json({ total, data });
+//         })
+//         .catch((error) => {
+//             res.status(500).json({ error: "Упс... Щось пішло не так..." });
+//         });
+// });
+
+// /////////// Сортування для обраної категорії  по ціні (більше менше) ///////////
+// app.get('/goods/categories/:categoryId/:sortIndex/:skip/:limit', (req, res) => {
+//     const categoryId = req.params.categoryId;
+//     const sortIndex = parseInt(req.params.sortIndex);
+//     const skip = parseInt(req.params.skip * 12);
+//     const limit = parseInt(req.params.limit);
+
+
+//     const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
+//     const dataQuery = db.collection('goods')
+//         .find({ "category_details.id": categoryId })
+//         .sort({ price: sortIndex })
+//         .skip(skip)
+//         .limit(limit)
+//         .toArray();
+
+//     Promise.all([totalQuery, dataQuery])
+//         .then(([total, data]) => {
+//             res.status(200).json({ total, data });
+//         })
+//         .catch((error) => {
+//             res.status(500).json({ error: "Упс... Щось пішло не так..." });
+//         });
+
+// });
+
+// // /////////// Сортування для обраної категорії  по ціні (новинки) ///////////
+// // app.get('/newgoods/categories/:categoryId/:sortId/:skip/:limit', (req, res) => {
+// //     const categoryId = req.params.categoryId;
+// //     const sortId = req.params.sortId;
+// //     const skip = parseInt(req.params.skip * 12);
+// //     const limit = parseInt(req.params.limit);
+
+// //     const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
+// //     const dataQuery = db.collection('goods')
+// //         .find({ "category_details.id": categoryId })
+// //         .sort({ "create_at": sortId })
+// //         .skip(skip)
+// //         .limit(limit)
+// //         .toArray();
+
+// //     Promise.all([totalQuery, dataQuery])
+// //         .then(([total, data]) => {
+// //             res.status(200).json({ total, data });
+// //         })
+// //         .catch((error) => {
+// //             res.status(500).json({ error: "Упс... Щось пішло не так..." });
+// //         });
+// // });
 
 
