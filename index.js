@@ -187,6 +187,7 @@ app.get('/goods/categories/:categoryId', async (req, res) => {
         const min = req.query.min ? parseInt(req.query.min) : null;
         const max = req.query.max ? parseInt(req.query.max) : null;
         let brands = req.query.brend ? Array.isArray(req.query.brend) ? req.query.brend : [req.query.brend] : [];
+        const isAvailable = req.query.isAvailable ? req.query.isAvailable === 'true' : null;
 
         const filter = { "category_details.id": categoryId };
         if (min !== null || max !== null) {
@@ -198,6 +199,9 @@ app.get('/goods/categories/:categoryId', async (req, res) => {
             filter.$and = [
                 { "brend": { $in: brands } }
             ];
+        }
+        if (isAvailable !== null) {
+            filter.available = isAvailable;
         }
 
         const sort = sortIndex ? { price: sortIndex } : null;
@@ -231,6 +235,7 @@ app.get('/goods/subcategories/:subCategoryId', async (req, res) => {
         const min = req.query.min ? parseInt(req.query.min) : null;
         const max = req.query.max ? parseInt(req.query.max) : null;
         let brands = req.query.brend ? Array.isArray(req.query.brend) ? req.query.brend : [req.query.brend] : [];
+        const isAvailable = req.query.isAvailable ? req.query.isAvailable === 'true' : null;
 
         const filter = { "sub_category_detail.id": subCategoryId };
         if (min !== null || max !== null) {
@@ -242,6 +247,9 @@ app.get('/goods/subcategories/:subCategoryId', async (req, res) => {
             filter.$and = [
                 { "brend": { $in: brands } }
             ];
+        }
+        if (isAvailable !== null) {
+            filter.available = isAvailable;
         }
 
         const sort = sortIndex ? { price: sortIndex } : null;
