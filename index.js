@@ -325,31 +325,28 @@ app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
         });
 });
 
-// /////////// Сортування для обраної категорії  по ціні (більше менше) ///////////
-// app.get('/goods/categories/:categoryId/:sortIndex/:skip/:limit', (req, res) => {
-//     const categoryId = req.params.categoryId;
-//     const sortIndex = parseInt(req.params.sortIndex);
-//     const skip = parseInt(req.params.skip * 12);
-//     const limit = parseInt(req.params.limit);
+// /////////// Отримання покупок юзера ///////////
+app.get('/users/purchases/:userId/:skip/:limit', (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const skip = parseInt(req.params.skip) * 6;
+    const limit = parseInt(req.params.limit);
+
+    const totalQuery = db.collection('user_purchses').countDocuments({ "buyer_id": userId });
+    const dataQuery = db.collection('user_purchses')
+        .find({ "buyer_id": userId })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
 
-//     const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
-//     const dataQuery = db.collection('goods')
-//         .find({ "category_details.id": categoryId })
-//         .sort({ price: sortIndex })
-//         .skip(skip)
-//         .limit(limit)
-//         .toArray();
-
-//     Promise.all([totalQuery, dataQuery])
-//         .then(([total, data]) => {
-//             res.status(200).json({ total, data });
-//         })
-//         .catch((error) => {
-//             res.status(500).json({ error: "Упс... Щось пішло не так..." });
-//         });
-
-// });
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
+        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
 
 // // /////////// Сортування для обраної категорії  по ціні (новинки) ///////////
 // // app.get('/newgoods/categories/:categoryId/:sortId/:skip/:limit', (req, res) => {
