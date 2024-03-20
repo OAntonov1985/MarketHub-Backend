@@ -328,6 +328,7 @@ app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
 // /////////// Отримання покупок юзера ///////////
 app.get('/users/purchases/:userId/:skip/:limit', (req, res) => {
     const userId = parseInt(req.params.userId);
+    console.log(userId)
     const skip = parseInt(req.params.skip) * 6;
     const limit = parseInt(req.params.limit);
 
@@ -338,6 +339,40 @@ app.get('/users/purchases/:userId/:skip/:limit', (req, res) => {
         .limit(limit)
         .toArray();
 
+
+    Promise.all([totalQuery, dataQuery])
+        .then(([total, data]) => {
+            res.status(200).json({ total, data });
+        })
+        .catch((error) => {
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
+
+
+
+// /////////// Отримання товарів юзера ///////////
+app.get('/users/usergoods/:userId/:skip/:limit', (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const skip = parseInt(req.params.skip) * 6;
+    const limit = parseInt(req.params.limit);
+    const isActive = req.query.isActive;
+
+    const filter = { "seller_id": userId };
+
+    if (isActive === 'true') {
+        filter.available = true;
+    } else if (isActive === 'false') {
+        filter.available = false;
+    }
+
+    const totalQuery = db.collection('goods').countDocuments(filter);
+    const dataQuery = db.collection('goods')
+        .find(filter)
+        .sort({ "created_at": 1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
 
     Promise.all([totalQuery, dataQuery])
         .then(([total, data]) => {
