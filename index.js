@@ -383,28 +383,42 @@ app.get('/users/usergoods/:userId/:skip/:limit', (req, res) => {
         });
 });
 
-// // /////////// Сортування для обраної категорії  по ціні (новинки) ///////////
-// // app.get('/newgoods/categories/:categoryId/:sortId/:skip/:limit', (req, res) => {
-// //     const categoryId = req.params.categoryId;
-// //     const sortId = req.params.sortId;
-// //     const skip = parseInt(req.params.skip * 12);
-// //     const limit = parseInt(req.params.limit);
+// // /////////// Зміна наявності товару по  id ///////////
 
-// //     const totalQuery = db.collection('goods').countDocuments({ "category_details.id": categoryId });
-// //     const dataQuery = db.collection('goods')
-// //         .find({ "category_details.id": categoryId })
-// //         .sort({ "create_at": sortId })
-// //         .skip(skip)
-// //         .limit(limit)
-// //         .toArray();
+app.put('/goods/:id/:isAvalable', (req, res) => {
+    const id = req.params.id;
+    const isAvalable = req.params.isAvalable === 'true';
 
-// //     Promise.all([totalQuery, dataQuery])
-// //         .then(([total, data]) => {
-// //             res.status(200).json({ total, data });
-// //         })
-// //         .catch((error) => {
-// //             res.status(500).json({ error: "Упс... Щось пішло не так..." });
-// //         });
-// // });
+    db.collection('goods').updateOne(
+        { "id": id },
+        { $set: { "available": isAvalable } },
+        (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(500).json({ error: "Упс... Щось пішло не так..." });
+                return;
+            }
+            res.status(200).json({ message: "Наявність товару успішно оновлена" });
+        }
+    );
+});
 
+
+
+// // /////////// Видаленн товару по id  ///////////
+app.delete('/goods/:id', (req, res) => {
+    const id = req.params.id;
+
+    db.collection('goods').deleteOne(
+        { "id": id },
+        (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(500).json({ error: "Упс... Щось пішло не так..." });
+                return;
+            }
+            res.status(200).json({ message: "Товар успішно видалено" });
+        }
+    );
+});
 
