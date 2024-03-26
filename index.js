@@ -422,3 +422,34 @@ app.delete('/goods/:id', (req, res) => {
     );
 });
 
+// // /////////// Пошук товару ///////////
+app.get('/search/:searchTerm', (req, res) => {
+    const searchTerm = req.params.searchTerm;
+
+    const titleQuery = { "title": { $regex: searchTerm, $options: "i" } };
+    const idQuery = { "id": { $regex: searchTerm, $options: "i" } };
+
+
+    const searchPipeline = [
+        { $match: { $or: [titleQuery, idQuery] } },
+        { $group: { _id: null, count: { $sum: 1 } } }
+    ];
+
+    db.collection('goods').aggregate(searchPipeline).toArray((err, total) => {
+        if (err) {
+            console.error(err);
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+            return;
+        }
+
+        db.collection('goods').find({ $or: [titleQuery, idQuery] }).toArray((err, data) => {
+            if (err) {
+                console.error(err);
+                res.status(500).json({ error: "Упс... Щось пішло не так..." });
+                return;
+            }
+            res.status(200).json({ total: total.length > 0 ? total[0].count : 0, data });
+        });
+    });
+});
+
