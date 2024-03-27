@@ -429,27 +429,34 @@ app.get('/search/:searchTerm', (req, res) => {
     const titleQuery = { "title": { $regex: searchTerm, $options: "i" } };
     const idQuery = { "id": { $regex: searchTerm, $options: "i" } };
 
-
     const searchPipeline = [
         { $match: { $or: [titleQuery, idQuery] } },
-        { $group: { _id: null, count: { $sum: 1 } } }
+        { $group: { _id: null, count: { $sum: 1 }, data: { $push: "$$ROOT" } } }
     ];
 
-    db.collection('goods').aggregate(searchPipeline).toArray((err, total) => {
+    db.collection('goods').aggregate(searchPipeline).toArray((err, result) => {
         if (err) {
             console.error(err);
             res.status(500).json({ error: "Упс... Щось пішло не так..." });
             return;
         }
 
-        db.collection('goods').find({ $or: [titleQuery, idQuery] }).toArray((err, data) => {
-            if (err) {
-                console.error(err);
-                res.status(500).json({ error: "Упс... Щось пішло не так..." });
-                return;
-            }
-            res.status(200).json({ total: total.length > 0 ? total[0].count : 0, data });
+        if (result.length === 0) {
+            res.status(200).json({ total: 0, data: [] });
+            return;
+        }
+
+        const total = result[0].count;
+        const data = result[0].data.map(item => {
+            return {
+                title: item.title,
+                id: item.id,
+                price: item.price,
+                thumbnail: item.thumbnail // Передбачається, що thumbnail вже існує у даних
+            };
         });
+
+        res.status(200).json({ total, data });
     });
 });
 
