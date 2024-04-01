@@ -328,7 +328,7 @@ app.get('/goods/subcategories/:subCategoryId/:skip/:limit', (req, res) => {
 // /////////// Отримання покупок юзера ///////////
 app.get('/users/purchases/:userId/:skip/:limit', (req, res) => {
     const userId = parseInt(req.params.userId);
-    console.log(userId)
+    // console.log(userId)
     const skip = parseInt(req.params.skip) * 6;
     const limit = parseInt(req.params.limit);
 
@@ -459,4 +459,63 @@ app.get('/search/:searchTerm', (req, res) => {
         res.status(200).json({ total, data });
     });
 });
+
+
+app.get('/searchPage/:searchTerm', async (req, res) => {
+    const searchTerm = req.params.searchTerm;
+    const limit = 12;
+    const skip = parseInt(req.query.skip * 12) || 0;
+
+    const titleQuery = { "title": { $regex: searchTerm, $options: "i" } };
+    const idQuery = { "id": { $regex: searchTerm, $options: "i" } };
+
+    try {
+
+        const searchPipeline = [
+            { $match: { $or: [titleQuery, idQuery] } }
+
+        ];
+
+
+        let brands = req.query.brend ? Array.isArray(req.query.brend) ? req.query.brend : [req.query.brend] : [];
+        if (brands.length > 0) {
+            searchPipeline.unshift({ $match: { "brend": { $in: brands } } });
+        }
+
+
+        const min = req.query.min ? parseInt(req.query.min) : null;
+        const max = req.query.max ? parseInt(req.query.max) : null;
+        if (min !== null) {
+            searchPipeline.unshift({ $match: { "price": { $gte: min } } });
+        }
+        if (max !== null) {
+            searchPipeline.unshift({ $match: { "price": { $lte: max } } });
+        }
+
+
+        const isAvailable = req.query.isAvailable ? req.query.isAvailable === 'true' : null;
+        if (isAvailable !== null) {
+            searchPipeline.unshift({ $match: { "available": isAvailable } });
+        }
+
+
+        const sortIndex = req.query.sortIndex === '1' ? 1 : req.query.sortIndex === '-1' ? -1 : null;
+        if (sortIndex !== null) {
+            searchPipeline.push({ $sort: { "price": sortIndex } });
+        }
+
+        let data = await db.collection('goods').aggregate(searchPipeline).toArray();
+        const total = data.length;
+
+        const limitedData = data.slice(skip, skip + limit);
+
+
+        res.status(200).json({ total, data: limitedData });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Упс... Щось пішло не так..." });
+    }
+});
+
+
 
