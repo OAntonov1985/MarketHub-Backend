@@ -508,7 +508,7 @@ app.get('/searchPage/:searchTerm', async (req, res) => {
         let data = await db.collection('goods').aggregate(searchPipeline).toArray();
         const total = data.length;
 
-        const limitedData = data.slice(skip, skip + limit);
+        const limitedData = data.slice(skip * limit, skip === 0 ? limit : (skip + 1) * limit);
 
 
         res.status(200).json({ total, data: limitedData });
