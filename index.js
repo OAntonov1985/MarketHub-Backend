@@ -452,7 +452,8 @@ app.get('/search/:searchTerm', (req, res) => {
                 title: item.title,
                 id: item.id,
                 price: item.price,
-                thumbnail: item.thumbnail // Передбачається, що thumbnail вже існує у даних
+                thumbnail: item.thumbnail,
+                available: item.available
             };
         });
 
