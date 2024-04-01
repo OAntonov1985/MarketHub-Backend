@@ -465,7 +465,7 @@ app.get('/search/:searchTerm', (req, res) => {
 app.get('/searchPage/:searchTerm', async (req, res) => {
     const searchTerm = req.params.searchTerm;
     const limit = 12;
-    const skip = parseInt(req.query.skip * 12) || 0;
+    const skip = parseInt(req.query.skip) || 0;
 
     const titleQuery = { "title": { $regex: searchTerm, $options: "i" } };
     const idQuery = { "id": { $regex: searchTerm, $options: "i" } };
