@@ -452,8 +452,8 @@ app.get('/search/:searchTerm', (req, res) => {
         //         available: item.available
         //     };
         // });
-
-        const data = result;
+        // console.log(result[0].data)
+        const data = result[0];
 
         res.status(200).json({ total, data });
     });
