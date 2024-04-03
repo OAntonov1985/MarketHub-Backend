@@ -13,6 +13,8 @@ const pageSize = 12;
 
 let db;
 
+
+
 connectToDb((err) => {
     if (!err) {
         app.listen(PORT, (err) => {
@@ -271,9 +273,6 @@ app.get('/goods/subcategories/:subCategoryId', async (req, res) => {
 });
 
 
-
-
-
 /////////// Отримання товарів в категорії звичайне///////////
 app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
     const pageSize = 12;
@@ -296,9 +295,6 @@ app.get('/goods/categories/:categoryId/:skip/:limit', (req, res) => {
             res.status(500).json({ error: "Упс... Щось пішло не так..." });
         });
 });
-
-
-
 
 
 
@@ -422,7 +418,7 @@ app.delete('/goods/:id', (req, res) => {
     );
 });
 
-// // /////////// Пошук товару ///////////
+// // /////////// Пошук товару  в хедері (повертає title, id, thumbnail, price, available) ///////////
 app.get('/search/:searchTerm', (req, res) => {
     const searchTerm = req.params.searchTerm;
 
@@ -447,21 +443,23 @@ app.get('/search/:searchTerm', (req, res) => {
         }
 
         const total = result[0].count;
-        const data = result[0].data.map(item => {
-            return {
-                title: item.title,
-                id: item.id,
-                price: item.price,
-                thumbnail: item.thumbnail,
-                available: item.available
-            };
-        });
+        // const data = result[0].data.map(item => {
+        //     return {
+        //         title: item.title,
+        //         id: item.id,
+        //         price: item.price,
+        //         thumbnail: item.thumbnail,
+        //         available: item.available
+        //     };
+        // });
+
+        const data = result;
 
         res.status(200).json({ total, data });
     });
 });
 
-
+// // /////////// Пошук товару  на сторінці пошуку (повертає весь item) ///////////
 app.get('/searchPage/:searchTerm', async (req, res) => {
     const searchTerm = req.params.searchTerm;
     const limit = 12;
