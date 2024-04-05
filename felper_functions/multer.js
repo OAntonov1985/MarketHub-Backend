@@ -14,7 +14,7 @@ function checkFileType(file, cb) {
     }
 }
 
-// Middleware для загрузки нескольких файлов
+
 const uploadMultiple = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 1000000 },
