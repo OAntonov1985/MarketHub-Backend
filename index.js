@@ -525,18 +525,9 @@ const { uploadMultiple } = require("./multer");
 app.post('/createnewgood', uploadMultiple, async (req, res) => {
     let good_id;
     let next_good_id;
-    const categoryDetailsString = req.body.category_details;
-    const subCategoryDetailsString = req.body.sub_category_detail;
 
-    const categoryDetailsObject = JSON.parse(categoryDetailsString
-        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ')
-        .replace(/'/g, '"')
-    );
-
-    const subCategoryDetailsObject = JSON.parse(subCategoryDetailsString
-        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ')
-        .replace(/'/g, '"')
-    );
+    const categoryDetailsObject = JSON.parse(decodeURIComponent(req.body.category_details));
+    const subCategoryDetailsObject = JSON.parse(decodeURIComponent(req.body.sub_category_detail));
 
     const { auth } = require('./config/firebase.config');
 
