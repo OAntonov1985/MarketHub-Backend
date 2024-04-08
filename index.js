@@ -538,6 +538,8 @@ app.post('/createnewgood', uploadMultiple, async (req, res) => {
         .replace(/'/g, '"')
     );
 
+    const { auth } = require('./config/firebase.config');
+
     try {
         const newGoodData = req.body;
         const imageURLs = [];
