@@ -20,16 +20,16 @@ let db;
 
 connectToDb((err) => {
     if (!err) {
-        setTimeout(() => {
-            app.listen(PORT, (err) => {
-                err ? console.log(err) : console.log(`listening port ${PORT}`);
-            });
-        }, 30000); // Устанавливаем таймаут на 30 секунд (в миллисекундах)
+        app.listen(PORT, (err) => {
+            err ? console.log(err) : console.log(`listening port ${PORT}`);
+        });
         db = getDb();
     } else {
         console.log(`DB connection error: ${err}`);
     }
 });
+
+
 
 /////////// КАТЕГОРІЇ на головній ///////////
 app.get('/categories', (req, res) => {
@@ -535,6 +535,7 @@ const firebaseConfig = {
 
 
 app.post('/createnewgood', uploadMultiple, async (req, res) => {
+    req.setTimeout(60000);
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     let good_id;
