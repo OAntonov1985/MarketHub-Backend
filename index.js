@@ -6,7 +6,7 @@ const { getStorage, ref, uploadBytesResumable, getDownloadURL } = require('fireb
 
 // const { upload, uploadMultiple } = require('./helper_functions/multer')
 // const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
-const { auth } = require('./config/firebase.config')
+// const { auth } = require('./config/firebase.config')
 
 const PORT = process.env.PORT || 3000;
 
