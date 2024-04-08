@@ -603,9 +603,10 @@ app.post('/createnewgood', uploadMultiple, async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Failed to upload images' });
+        res.status(500).json({ error: 'Failed to upload images', errorDetails: error.message, error });
     }
 });
+
 
 
 
