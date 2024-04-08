@@ -20,9 +20,11 @@ let db;
 
 connectToDb((err) => {
     if (!err) {
-        app.listen(PORT, (err) => {
-            err ? console.log(err) : console.log(`listening port ${PORT}`);
-        });
+        setTimeout(() => {
+            app.listen(PORT, (err) => {
+                err ? console.log(err) : console.log(`listening port ${PORT}`);
+            });
+        }, 30000); // Устанавливаем таймаут на 30 секунд (в миллисекундах)
         db = getDb();
     } else {
         console.log(`DB connection error: ${err}`);
