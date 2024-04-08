@@ -3,10 +3,9 @@ const { connectToDb, getDb } = require('./db');
 const cors = require("cors");
 require('dotenv').config()
 const { getStorage, ref, uploadBytesResumable, getDownloadURL } = require('firebase/storage');
+const { initializeApp } = require("firebase/app");
+const { getAuth } = require("firebase/auth");
 
-// const { upload, uploadMultiple } = require('./helper_functions/multer')
-// const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
-// const { auth } = require('./config/firebase.config')
 
 const PORT = process.env.PORT || 3000;
 
@@ -522,14 +521,27 @@ app.get('/searchPage/:searchTerm', async (req, res) => {
 
 const { uploadMultiple } = require("./multer");
 
+const firebaseConfig = {
+    apiKey: process.env.apiKey,
+    authDomain: process.env.authDomain,
+    projectId: process.env.projectId,
+    storageBucket: process.env.storageBucket,
+    messagingSenderId: process.env.messagingSenderId,
+    appId: process.env.appId,
+};
+
+
+
 app.post('/createnewgood', uploadMultiple, async (req, res) => {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     let good_id;
     let next_good_id;
 
     const categoryDetailsObject = JSON.parse(decodeURIComponent(req.body.category_details));
     const subCategoryDetailsObject = JSON.parse(decodeURIComponent(req.body.sub_category_detail));
 
-    const { auth } = require('./config/firebase.config');
+
 
     try {
         const newGoodData = req.body;
@@ -548,50 +560,50 @@ app.post('/createnewgood', uploadMultiple, async (req, res) => {
             imageURLs.push(downloadURL);
         }
 
-        // if (imageURLs.length > 0) {
-        //     const collection = db.collection("technicalInfo");
-        //     const document = await collection.findOne({});
-        //     good_id = document.next_good_id;
-        //     next_good_id = document.next_good_id;
+        if (imageURLs.length > 0) {
+            const collection = db.collection("technicalInfo");
+            const document = await collection.findOne({});
+            good_id = document.next_good_id;
+            next_good_id = document.next_good_id;
 
-        //     const firstCharacter = next_good_id.charAt(0);
-        //     const remainingCharacters = next_good_id.substring(1);
-        //     const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
+            const firstCharacter = next_good_id.charAt(0);
+            const remainingCharacters = next_good_id.substring(1);
+            const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
 
-        //     // const result = await collection.updateOne(
-        //     //     {},
-        //     //     { $set: { next_good_id: newNextGoodId } }
-        //     // );
+            const result = await collection.updateOne(
+                {},
+                { $set: { next_good_id: newNextGoodId } }
+            );
 
-        //     // const newGoodDataToPush = {
-        //     //     id: good_id,
-        //     //     title: newGoodData.title,
-        //     //     price: parseInt(newGoodData.price),
-        //     //     brend: newGoodData.brend,
-        //     //     available: Boolean(newGoodData.available),
-        //     //     description: newGoodData.description.slice(1, -1).split(", "),
-        //     //     thumbnail: imageURLs[0].toString(),
-        //     //     images: imageURLs.splice(1),
-        //     //     category_details: {
-        //     //         id: categoryDetailsObject.id.toString(),
-        //     //         name: categoryDetailsObject.name
-        //     //     },
-        //     //     sub_category_detail: {
-        //     //         id: subCategoryDetailsObject.id.toString(),
-        //     //         name: subCategoryDetailsObject.name
-        //     //     },
-        //     //     seller_id: parseInt(newGoodData.seller_id),
-        //     //     create_at: newGoodData.create_at,
-        //     //     how_many_solds: parseInt(newGoodData.how_many_solds),
-        //     // }
+            const newGoodDataToPush = {
+                id: good_id,
+                title: newGoodData.title,
+                price: parseInt(newGoodData.price),
+                brend: newGoodData.brend,
+                available: Boolean(newGoodData.available),
+                description: newGoodData.description.slice(1, -1).split(", "),
+                thumbnail: imageURLs[0].toString(),
+                images: imageURLs.splice(1),
+                category_details: {
+                    id: categoryDetailsObject.id.toString(),
+                    name: categoryDetailsObject.name
+                },
+                sub_category_detail: {
+                    id: subCategoryDetailsObject.id.toString(),
+                    name: subCategoryDetailsObject.name
+                },
+                seller_id: parseInt(newGoodData.seller_id),
+                create_at: newGoodData.create_at,
+                how_many_solds: parseInt(newGoodData.how_many_solds),
+            }
 
-        //     const collectionToPush = db.collection('goods');
-        //     const resultToPush = await collectionToPush.insertOne(newGoodDataToPush);
+            const collectionToPush = db.collection('goods');
+            const resultToPush = await collectionToPush.insertOne(newGoodDataToPush);
 
-        //     res.status(200).json({ status: 'SUCCESS', id: good_id });
-        // } else {
-        //     res.status(500).json({ error: 'помилка 1 ' });
-        // }
+            res.status(200).json({ status: 'SUCCESS', id: good_id });
+        } else {
+            res.status(500).json({ error: 'помилка 1 ' });
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'помилка 2', errorDetails: error.message, error });
