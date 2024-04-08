@@ -4,9 +4,9 @@ const cors = require("cors");
 require('dotenv').config()
 const { getStorage, ref, uploadBytesResumable, getDownloadURL } = require('firebase/storage');
 
-// const { upload, uploadMultiple } = require('./felper_functions/multer')
-// const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
-// const { auth } = require('./config/firebase.config')
+// const { upload, uploadMultiple } = require('./helper_functions/multer')
+const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = require("firebase/auth");
+const { auth } = require('./config/firebase.config')
 
 const PORT = process.env.PORT || 3000;
 
@@ -527,85 +527,82 @@ app.post('/createnewgood', uploadMultiple, async (req, res) => {
     let next_good_id;
     const categoryDetailsString = req.body.category_details;
     const subCategoryDetailsString = req.body.sub_category_detail;
-    const bigData = req.body;
-    // console.log(bigData)
 
-    // const categoryDetailsObject = JSON.parse(categoryDetailsString
-    //     .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ')
-    //     .replace(/'/g, '"')
-    // );
+    const categoryDetailsObject = JSON.parse(categoryDetailsString
+        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ')
+        .replace(/'/g, '"')
+    );
 
-    // const subCategoryDetailsObject = JSON.parse(subCategoryDetailsString
-    //     .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ')
-    //     .replace(/'/g, '"')
-    // );
+    const subCategoryDetailsObject = JSON.parse(subCategoryDetailsString
+        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2": ')
+        .replace(/'/g, '"')
+    );
 
-    // try {
-    //     const newGoodData = req.body;
-    //     const imageURLs = [];
+    try {
+        const newGoodData = req.body;
+        const imageURLs = [];
 
-    //     // Прямая загрузка файлов
-    //     for (let i = 0; i < req.files.length; i++) {
-    //         const file = req.files[i];
-    //         const fileName = `${newGoodData.title}/${Date.now()}_${file.originalname}`;
-    //         const storageRef = ref(getStorage(), fileName);
-    //         const metadata = {
-    //             contentType: file.mimetype,
-    //         };
+        for (let i = 0; i < req.files.length; i++) {
+            const file = req.files[i];
+            const fileName = `${newGoodData.title}/${Date.now()}_${file.originalname}`;
+            const storageRef = ref(getStorage(), fileName);
+            const metadata = {
+                contentType: file.mimetype,
+            };
 
-    //         await uploadBytesResumable(storageRef, file.buffer, metadata);
-    //         const downloadURL = await getDownloadURL(storageRef);
-    //         imageURLs.push(downloadURL);
-    //     }
+            await uploadBytesResumable(storageRef, file.buffer, metadata);
+            const downloadURL = await getDownloadURL(storageRef);
+            imageURLs.push(downloadURL);
+        }
 
-    //     if (imageURLs.length > 0) {
-    //         const collection = db.collection("technicalInfo");
-    //         const document = await collection.findOne({});
-    //         good_id = document.next_good_id;
-    //         next_good_id = document.next_good_id;
+        if (imageURLs.length > 0) {
+            const collection = db.collection("technicalInfo");
+            const document = await collection.findOne({});
+            good_id = document.next_good_id;
+            next_good_id = document.next_good_id;
 
-    //         const firstCharacter = next_good_id.charAt(0);
-    //         const remainingCharacters = next_good_id.substring(1);
-    //         const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
+            const firstCharacter = next_good_id.charAt(0);
+            const remainingCharacters = next_good_id.substring(1);
+            const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
 
-    //         const result = await collection.updateOne(
-    //             {},
-    //             { $set: { next_good_id: newNextGoodId } }
-    //         );
+            const result = await collection.updateOne(
+                {},
+                { $set: { next_good_id: newNextGoodId } }
+            );
 
-    //         const newGoodDataToPush = {
-    //             id: good_id,
-    //             title: newGoodData.title,
-    //             price: parseInt(newGoodData.price),
-    //             brend: newGoodData.brend,
-    //             available: Boolean(newGoodData.available),
-    //             description: newGoodData.description.slice(1, -1).split(", "),
-    //             thumbnail: imageURLs.toString(),
-    //             images: imageURLs.splice(1),
-    //             category_details: {
-    //                 id: categoryDetailsObject.id.toString(),
-    //                 name: categoryDetailsObject.name
-    //             },
-    //             sub_category_detail: {
-    //                 id: subCategoryDetailsObject.id.toString(),
-    //                 name: subCategoryDetailsObject.name
-    //             },
-    //             seller_id: parseInt(newGoodData.seller_id),
-    //             create_at: newGoodData.create_at,
-    //             how_many_solds: parseInt(newGoodData.how_many_solds),
-    //         }
+            const newGoodDataToPush = {
+                id: good_id,
+                title: newGoodData.title,
+                price: parseInt(newGoodData.price),
+                brend: newGoodData.brend,
+                available: Boolean(newGoodData.available),
+                description: newGoodData.description.slice(1, -1).split(", "),
+                thumbnail: imageURLs[0].toString(),
+                images: imageURLs.splice(1),
+                category_details: {
+                    id: categoryDetailsObject.id.toString(),
+                    name: categoryDetailsObject.name
+                },
+                sub_category_detail: {
+                    id: subCategoryDetailsObject.id.toString(),
+                    name: subCategoryDetailsObject.name
+                },
+                seller_id: parseInt(newGoodData.seller_id),
+                create_at: newGoodData.create_at,
+                how_many_solds: parseInt(newGoodData.how_many_solds),
+            }
 
-    //         const collectionToPush = db.collection('goods');
-    //         const resultToPush = await collectionToPush.insertOne(newGoodDataToPush);
+            const collectionToPush = db.collection('goods');
+            const resultToPush = await collectionToPush.insertOne(newGoodDataToPush);
 
-    //         res.status(200).json({ status: 'SUCCESS', id: good_id });
-    //     } else {
-    //         res.status(500).json({ error: 'Failed to upload images' });
-    //     }
-    // } catch (error) {
-    //     console.error(error);
-    //     res.status(500).json({ error: 'Failed to upload images' });
-    // }
+            res.status(200).json({ status: 'SUCCESS', id: good_id });
+        } else {
+            res.status(500).json({ error: 'Failed to upload images' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to upload images' });
+    }
 });
 
 
