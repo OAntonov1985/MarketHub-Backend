@@ -552,7 +552,7 @@ app.post('/createnewgood', async (req, res) => {
                 brend: newGoodData.brend,
                 available: Boolean(newGoodData.available),
                 description: newGoodData.description,
-                images: newGoodData,
+                images: newGoodData.images,
                 category_details: {
                     id: newGoodData.category_details.id,
                     name: newGoodData.category_details.name
