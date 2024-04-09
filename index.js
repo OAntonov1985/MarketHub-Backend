@@ -549,8 +549,8 @@ app.post('/createnewgood', async (req, res) => {
                 brend: newGoodData.brend,
                 available: Boolean(newGoodData.available),
                 description: newGoodData.description,
-                thumbnail: newGoodData.images[0],
-                images: newGoodData.images.splice(1),
+                thumbnail: newGoodData.thumbnail,
+                images: newGoodData.images,
                 category_details: {
                     id: newGoodData.category_details.id,
                     name: newGoodData.category_details.name
