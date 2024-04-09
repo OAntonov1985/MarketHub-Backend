@@ -519,7 +519,15 @@ app.post('/createnewgood', async (req, res) => {
     try {
         const newGoodData = req.body;
 
-        if (newGoodData) {
+        if (newGoodData && Object.keys(newGoodData).length > 0) {
+            const requiredFields = ['title', 'price', 'brend', 'available', 'description', 'images', 'category_details', 'sub_category_detail', 'seller_id', 'create_at', 'how_many_solds'];
+
+            const missingFields = requiredFields.filter(field => !newGoodData.hasOwnProperty(field));
+
+            if (missingFields.length > 0) {
+                return res.status(400).json({ error: `Отсутствуют обязательные поля: ${missingFields.join(', ')}` });
+            }
+
             const collection = db.collection("technicalInfo");
             const document = await collection.findOne({});
             good_id = document.next_good_id;
@@ -561,13 +569,14 @@ app.post('/createnewgood', async (req, res) => {
 
             res.status(200).json({ status: 'SUCCESS', id: next_good_id });
         } else {
-            res.status(500).json({ error: "Данные отсутствуют" });
+            res.status(400).json({ error: "Данные отсутствуют" });
         }
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Произошла ошибка при добавлении товара', errorDetails: error.message });
     }
 });
+
 
 
 
