@@ -511,66 +511,39 @@ app.get('/searchPage/:searchTerm', async (req, res) => {
     }
 });
 
-const { uploadMultiple } = require("./multer");
+// const { uploadMultiple } = require("./multer");
 
-const firebaseConfig = {
-    apiKey: process.env.apiKey,
-    authDomain: process.env.authDomain,
-    projectId: process.env.projectId,
-    storageBucket: process.env.storageBucket,
-    messagingSenderId: process.env.messagingSenderId,
-    appId: process.env.appId,
-};
-
-app.post('/downloadimages', uploadMultiple, async (req, res) => {
-    req.setTimeout(30000);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const data = req.body;
-    console.log(data.title);
-
-    try {
-        const newGoodData = req.body;
-        const imageURLs = [];
-
-        for (let i = 0; i < req.files.length; i++) {
-            const file = req.files[i];
-            const fileName = `${newGoodData.title}/${Date.now()}_${file.originalname}`;
-            const storageRef = ref(getStorage(), fileName);
-            const metadata = {
-                contentType: file.mimetype,
-            };
-
-            await uploadBytesResumable(storageRef, file.buffer, metadata);
-            const downloadURL = await getDownloadURL(storageRef);
-            imageURLs.push(downloadURL);
-        }
-
-        res.status(200).json({ status: 'SUCCESS', imageURLs });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Упс... Щось пішло не так...", errorDetails: error.message, error });
-    }
-});
-
+// const firebaseConfig = {
+//     apiKey: process.env.apiKey,
+//     authDomain: process.env.authDomain,
+//     projectId: process.env.projectId,
+//     storageBucket: process.env.storageBucket,
+//     messagingSenderId: process.env.messagingSenderId,
+//     appId: process.env.appId,
+// };
 
 
 app.post('/createnewgood', async (req, res) => {
+    let good_id;
+    let next_good_id;
+
     try {
         const newGoodData = req.body;
-        // console.log(newGoodData.category_details.id);
-        // console.log(typeof (newGoodData.category_details.name));
 
         if (newGoodData) {
             const collection = db.collection("technicalInfo");
             const document = await collection.findOne({});
-            const next_good_id = document.next_good_id;
+            good_id = document.next_good_id;
+            next_good_id = document.next_good_id;
 
-            const parts = next_good_id.split(next_good_id.charAt(0));
-            const incrementedNumberPart = parseInt(parts[1]) + 1;
-            const newNextGoodId = parts[0] + incrementedNumberPart;
+            const firstCharacter = next_good_id.charAt(0);
+            const remainingCharacters = next_good_id.substring(1);
+            const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
 
-            await collection.updateOne({}, { $set: { next_good_id: newNextGoodId } });
+            const result = await collection.updateOne(
+                {},
+                { $set: { next_good_id: newNextGoodId } }
+            );
 
             const newGoodDataToPush = {
                 id: next_good_id,
@@ -579,8 +552,7 @@ app.post('/createnewgood', async (req, res) => {
                 brend: newGoodData.brend,
                 available: Boolean(newGoodData.available),
                 description: newGoodData.description,
-                thumbnail: newGoodData.images[0],
-                images: newGoodData.images.slice(1),
+                images: newGoodData,
                 category_details: {
                     id: newGoodData.category_details.id,
                     name: newGoodData.category_details.name
