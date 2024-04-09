@@ -370,7 +370,7 @@ app.get('/users/usergoods/:userId/:skip/:limit', (req, res) => {
     const totalQuery = db.collection('goods').countDocuments(filter);
     const dataQuery = db.collection('goods')
         .find(filter)
-        .sort({ "created_at": 1 })
+        .sort({ "created_at": -1 })
         .skip(skip)
         .limit(limit)
         .toArray();
@@ -533,7 +533,7 @@ app.post('/createnewgood', async (req, res) => {
             good_id = document.next_good_id;
             next_good_id = document.next_good_id;
 
-            const firstCharacter = next_good_id.substring(0, 1);
+            const firstCharacter = next_good_id.charAt(0);
             const remainingCharacters = next_good_id.substring(1);
             const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
 
