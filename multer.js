@@ -19,7 +19,7 @@ function uploadMultiple(req, res, next) {
     const storage = multer.memoryStorage();
     const upload = multer({
         storage: storage,
-        limits: { fileSize: 1000000 }, // 1 MB
+        limits: { fileSize: 5000000 },
         fileFilter: function (req, file, cb) {
             checkFileType(file, cb);
         }
