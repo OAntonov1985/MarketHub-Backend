@@ -511,17 +511,6 @@ app.get('/searchPage/:searchTerm', async (req, res) => {
     }
 });
 
-// const { uploadMultiple } = require("./multer");
-
-// const firebaseConfig = {
-//     apiKey: process.env.apiKey,
-//     authDomain: process.env.authDomain,
-//     projectId: process.env.projectId,
-//     storageBucket: process.env.storageBucket,
-//     messagingSenderId: process.env.messagingSenderId,
-//     appId: process.env.appId,
-// };
-
 
 app.post('/createnewgood', async (req, res) => {
     let good_id;
@@ -552,7 +541,8 @@ app.post('/createnewgood', async (req, res) => {
                 brend: newGoodData.brend,
                 available: Boolean(newGoodData.available),
                 description: newGoodData.description,
-                images: newGoodData.images,
+                thumbnail: newGoodData.images[0],
+                images: newGoodData.images.splice(1),
                 category_details: {
                     id: newGoodData.category_details.id,
                     name: newGoodData.category_details.name
