@@ -533,9 +533,12 @@ app.post('/createnewgood', async (req, res) => {
             good_id = document.next_good_id;
             next_good_id = document.next_good_id;
 
-            const firstCharacter = next_good_id.charAt(0);
-            const remainingCharacters = next_good_id.substring(1);
-            const newNextGoodId = firstCharacter + (parseInt(remainingCharacters) + 1);
+            const firstPart = next_good_id.substring(0, 2);
+            const secondPart = next_good_id.substring(2);
+            const newSecondPart = (parseInt(secondPart) + 1).toString();
+
+            const newNextGoodId = firstPart + newSecondPart;
+
 
             const result = await collection.updateOne(
                 {},
