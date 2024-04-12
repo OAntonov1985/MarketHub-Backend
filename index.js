@@ -581,6 +581,28 @@ app.post('/createnewgood', async (req, res) => {
 });
 
 
+app.get('/imagelist/:id', (req, res) => {
+    const goodId = req.params.id;
+
+    db.collection('goods')
+        .findOne({ id: goodId })
+        .then((result) => {
+            if (!result) {
+                res.status(404).json({ error: "Товар не найден" });
+                return;
+            }
+
+            const { thumbnail, images } = result;
+            const responseData = [thumbnail, ...images];
+
+            res.status(200).json(responseData);
+        })
+        .catch((error) => {
+            console.error("Упс. щось пішло не так. Зверніться до розробників:");
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
+
 
 
 
