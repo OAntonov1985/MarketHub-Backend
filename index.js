@@ -639,7 +639,7 @@ app.post('/createNewUser', async (req, res) => {
             email,
             userOrders: {},
             userProductsToSale: {},
-            phone,
+            pfone,
             password
         };
 
