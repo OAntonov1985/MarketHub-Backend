@@ -604,6 +604,55 @@ app.get('/imagelist/:id', (req, res) => {
 });
 
 
+app.post('/createNewUser', async (req, res) => {
+    const { email, name, surname, phone, password } = req.body;
+
+    try {
+        const userExists = await db.collection('users').findOne({ email });
+        if (userExists) {
+            res.status(400).json({ error: "Користувач з такою поштобю вже існує" });
+            return;
+        }
+
+        const techInfo = await db.collection('technicalInfo').findOne({});
+        if (!techInfo || techInfo.next_user_id == null) {
+            res.status(500).json({ error: "Упс... Щось пішло не так. Зверніться до розробників" });
+            return;
+        }
+
+        if (!techInfo || techInfo.next_user_id == null) {
+            res.status(500).json({ error: "Упс... Щось пішло не так. Зверніться до розробників" });
+            return;
+        }
+
+        const nextUserId = techInfo.next_user_id + 1;
+        await db.collection('technicalInfo').updateOne({}, { $set: { next_user_id: nextUserId } });
+
+        const newUser = {
+            id: techInfo.next_user_id,
+            name,
+            surname,
+            nameAs: {
+                nameAs: name,
+                surnameAs: surname
+            },
+            email,
+            userOrders: {},
+            userProductsToSale: {},
+            phone,
+            password
+        };
+
+        await db.collection('users').insertOne(newUser);
+
+        res.status(201).json({ message: "Користувача успішно додано", user: { email, password } });
+    } catch (error) {
+        console.error('Error creating new user:', error);
+        res.status(500).json({ error: "Помилка при створенні користувача" });
+    }
+});
+
+
 
 
 
