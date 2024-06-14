@@ -605,7 +605,7 @@ app.get('/imagelist/:id', (req, res) => {
 
 
 app.post('/createNewUser', async (req, res) => {
-    const { email, name, surname, phone, password } = req.body;
+    const { email, name, surname, pfone, password } = req.body;
 
     try {
         const userExists = await db.collection('users').findOne({ email });
