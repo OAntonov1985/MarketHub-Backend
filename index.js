@@ -663,11 +663,17 @@ app.post('/newOrder', async (req, res) => {
             const userExists = await db.collection('users').findOne({ id: searchingUser });
             if (userExists) {
                 const orderNum = nextOrderNumber + index;
+                const actualUserOrderGood = [];
+                userBuyingGoods.forEach(item => {
+                    if (item.seller_id === searchingUser) {
+                        actualUserOrderGood.push(item)
+                    }
+                })
                 const newOrder = {
                     orderNum,
                     userInfo,
                     userAdress,
-                    userBuyingGoods
+                    actualUserOrderGood
                 };
 
                 const updateResult = await db.collection('users').updateOne(
