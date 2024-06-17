@@ -632,8 +632,8 @@ app.post('/createNewUser', async (req, res) => {
                 surnameAs: surname
             },
             email,
-            userOrders: {},
-            userProductsToSale: {},
+            userOrders: [],
+            userProductsToSale: [],
             pfone,
             password
         };
