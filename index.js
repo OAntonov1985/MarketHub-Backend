@@ -657,23 +657,22 @@ app.post('/newOrder', async (req, res) => {
             return res.status(500).json({ error: "Упс... Щось пішло не так. Зверніться до розробників" });
         }
 
-        const nextOrderNumber = techInfo.next_order_number;
+        let nextOrderNumber = techInfo.next_order_number;
 
-        const updatePromises = sellersIDArray.map(async (searchingUser, index) => {
+        // Обновляем next_order_number сразу для всех заказов
+        await db.collection('technicalInfo').updateOne({}, { $set: { next_order_number: nextOrderNumber + sellersIDArray.length } });
+
+        // Если один продавец в массиве
+        if (sellersIDArray.length === 1) {
+            const searchingUser = sellersIDArray[0];
             const userExists = await db.collection('users').findOne({ id: searchingUser });
+
             if (userExists) {
-                const orderNum = nextOrderNumber + index;
-                const actualUserOrderGood = [];
-                userBuyingGoods.forEach(item => {
-                    if (item.seller_id === searchingUser) {
-                        actualUserOrderGood.push(item)
-                    }
-                })
                 const newOrder = {
-                    orderNum,
+                    orderNum: nextOrderNumber,
                     userInfo,
                     userAdress,
-                    actualUserOrderGood
+                    userBuyingGoods
                 };
 
                 const updateResult = await db.collection('users').updateOne(
@@ -682,31 +681,61 @@ app.post('/newOrder', async (req, res) => {
                 );
 
                 if (updateResult.modifiedCount > 0) {
-                    return { success: true, message: 'Ваше замовлення додано успішно' };
+                    return res.status(201).json({ message: "Ваше замовлення успішно створене" });
                 } else {
-                    return { success: false, message: 'Помилка при створенні замовлення' };
+                    return res.status(500).json({ error: 'Помилка при створенні замовлення' });
                 }
             } else {
-                return { success: false, message: 'Користувача не знайдено. Зверніться до розробників' };
+                return res.status(404).json({ error: 'Користувача не знайдено. Зверніться до розробників' });
             }
-        });
+        } else {
+            // Если несколько продавцов в массиве
+            const updatePromises = sellersIDArray.map(async (searchingUser, index) => {
+                const userExists = await db.collection('users').findOne({ id: searchingUser });
+                if (userExists) {
+                    const actualUserOrderGood = userBuyingGoods.filter(item => item.seller_id === searchingUser);
 
-        await db.collection('technicalInfo').updateOne({}, { $set: { next_order_number: nextOrderNumber + sellersIDArray.length } });
+                    if (actualUserOrderGood.length > 0) {
+                        const newOrder = {
+                            orderNum: nextOrderNumber + index,
+                            userInfo,
+                            userAdress,
+                            userBuyingGoods: actualUserOrderGood
+                        };
 
-        const results = await Promise.all(updatePromises);
+                        const updateResult = await db.collection('users').updateOne(
+                            { id: searchingUser },
+                            { $push: { userOrders: newOrder } }
+                        );
 
-        const errors = results.filter(result => !result.success);
-        if (errors.length > 0) {
-            console.error('Помилка при опрацюванні замовлення:', errors);
-            return res.status(500).json({ error: 'Помилка при створенні замовлення', details: errors });
+                        if (updateResult.modifiedCount > 0) {
+                            return { success: true, message: 'Ваше замовлення додано успішно' };
+                        } else {
+                            return { success: false, message: 'Помилка при створенні замовлення' };
+                        }
+                    }
+                } else {
+                    return { success: false, message: 'Користувача не знайдено. Зверніться до розробників' };
+                }
+            });
+
+            const results = await Promise.all(updatePromises);
+
+            const errors = results.filter(result => !result.success);
+            if (errors.length > 0) {
+                console.error('Помилка при опрацюванні замовлення:', errors);
+                return res.status(500).json({ error: 'Помилка при створенні замовлення', details: errors });
+            }
+
+            return res.status(201).json({ message: "Ваше замовлення успішно створене" });
         }
-
-        return res.status(201).json({ message: "Ваше замовлення успішно створене" });
     } catch (error) {
         console.error('Error creating new order:', error);
         return res.status(500).json({ error: "Помилка при створенні замовлення" });
     }
 });
+
+
 
 
 
