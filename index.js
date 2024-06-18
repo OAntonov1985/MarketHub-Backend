@@ -659,76 +659,38 @@ app.post('/newOrder', async (req, res) => {
 
         let nextOrderNumber = techInfo.next_order_number;
 
-        // Обновляем next_order_number сразу для всех заказов
-        await db.collection('technicalInfo').updateOne({}, { $set: { next_order_number: nextOrderNumber + sellersIDArray.length } });
-
-        // Если один продавец в массиве
-        if (sellersIDArray.length === 1) {
-            const searchingUser = sellersIDArray[0];
+        for (let i = 0; i < sellersIDArray.length; i++) {
+            const searchingUser = sellersIDArray[i];
             const userExists = await db.collection('users').findOne({ id: searchingUser });
-
             if (userExists) {
-                const newOrder = {
-                    orderNum: nextOrderNumber,
-                    userInfo,
-                    userAdress,
-                    userBuyingGoods
-                };
+                const actualUserOrderGood = userBuyingGoods.filter(item => item.seller_id === searchingUser);
 
-                const updateResult = await db.collection('users').updateOne(
-                    { id: searchingUser },
-                    { $push: { userOrders: newOrder } }
-                );
+                if (actualUserOrderGood.length > 0) {
+                    const newOrder = {
+                        orderNum: nextOrderNumber,
+                        userInfo,
+                        userAdress,
+                        userBuyingGoods: actualUserOrderGood
+                    };
 
-                if (updateResult.modifiedCount > 0) {
-                    return res.status(201).json({ message: "Ваше замовлення успішно створене" });
-                } else {
-                    return res.status(500).json({ error: 'Помилка при створенні замовлення' });
+                    const updateResult = await db.collection('users').updateOne(
+                        { id: searchingUser },
+                        { $push: { userOrders: newOrder } }
+                    );
+
+                    if (updateResult.modifiedCount === 0) {
+                        console.error('Помилка при створенні замовлення для користувача:', searchingUser);
+                        return res.status(500).json({ error: 'Помилка при створенні замовлення' });
+                    }
+                    nextOrderNumber += 1;
+                    await db.collection('technicalInfo').updateOne({}, { $set: { next_order_number: nextOrderNumber } });
                 }
             } else {
+                console.error('Користувача не знайдено:', searchingUser);
                 return res.status(404).json({ error: 'Користувача не знайдено. Зверніться до розробників' });
             }
-        } else {
-            // Если несколько продавцов в массиве
-            const updatePromises = sellersIDArray.map(async (searchingUser, index) => {
-                const userExists = await db.collection('users').findOne({ id: searchingUser });
-                if (userExists) {
-                    const actualUserOrderGood = userBuyingGoods.filter(item => item.seller_id === searchingUser);
-
-                    if (actualUserOrderGood.length > 0) {
-                        const newOrder = {
-                            orderNum: nextOrderNumber + index,
-                            userInfo,
-                            userAdress,
-                            userBuyingGoods: actualUserOrderGood
-                        };
-
-                        const updateResult = await db.collection('users').updateOne(
-                            { id: searchingUser },
-                            { $push: { userOrders: newOrder } }
-                        );
-
-                        if (updateResult.modifiedCount > 0) {
-                            return { success: true, message: 'Ваше замовлення додано успішно' };
-                        } else {
-                            return { success: false, message: 'Помилка при створенні замовлення' };
-                        }
-                    }
-                } else {
-                    return { success: false, message: 'Користувача не знайдено. Зверніться до розробників' };
-                }
-            });
-
-            const results = await Promise.all(updatePromises);
-
-            const errors = results.filter(result => !result.success);
-            if (errors.length > 0) {
-                console.error('Помилка при опрацюванні замовлення:', errors);
-                return res.status(500).json({ error: 'Помилка при створенні замовлення', details: errors });
-            }
-
-            return res.status(201).json({ message: "Ваше замовлення успішно створене" });
         }
+        return res.status(201).json({ message: "Ваше замовлення успішно створене" });
     } catch (error) {
         console.error('Error creating new order:', error);
         return res.status(500).json({ error: "Помилка при створенні замовлення" });
