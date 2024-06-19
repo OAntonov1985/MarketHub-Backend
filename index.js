@@ -698,6 +698,60 @@ app.post('/newOrder', async (req, res) => {
 });
 
 
+app.post('/changeUserInfo', async (req, res) => {
+    const { userId, newUserName, newUserSurname, newUserPhone, newUserPassword, newUserEmail } = req.body;
+
+    try {
+        const userExists = await db.collection('users').findOne({ id: userId });
+        if (userExists) {
+            const userName = userExists.nameAs.nameAs;
+            const userSurname = userExists.nameAs.surnameAs;
+            const userPhone = userExists.pfone;
+            const userPassword = userExists.password;
+            const userEmail = userExists.email;
+
+            let updateFields = {};
+
+            // Проверяем и добавляем к updateFields только те поля, которые изменились
+            if (userName !== newUserName || userSurname !== newUserSurname) {
+                updateFields.nameAs = { nameAs: newUserName, surnameAs: newUserSurname };
+            }
+            if (userPhone !== newUserPhone) {
+                updateFields.pfone = newUserPhone;
+            }
+            if (userPassword !== newUserPassword) {
+                updateFields.password = newUserPassword;
+            }
+            if (userEmail !== newUserEmail) {
+                updateFields.email = newUserEmail;
+            }
+
+            // Если есть поля для обновления, выполняем обновление
+            if (Object.keys(updateFields).length > 0) {
+                const updateResult = await db.collection('users').updateOne(
+                    { id: userId },
+                    { $set: updateFields }
+                );
+
+                if (updateResult.modifiedCount > 0) {
+                    res.status(200).json({ message: "Дані користувача успішно оновлені" });
+                } else {
+                    res.status(400).json({ error: "Не вдалося оновити дані користувача" });
+                }
+            } else {
+                res.status(200).json({ message: "Немає змін для оновлення" });
+            }
+        } else {
+            res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ error: "Помилка при оновленні даних користувача" });
+    }
+
+});
+
+
 
 
 
