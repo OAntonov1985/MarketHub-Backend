@@ -718,7 +718,7 @@ app.post('/changeUserInfo', async (req, res) => {
             if (userPhone !== newUserPhone) {
                 updateFields.pfone = newUserPhone;
             }
-            if (userPassword !== newUserPassword) {
+            if (newUserPassword && userPassword !== newUserPassword) {
                 updateFields.password = newUserPassword;
             }
             if (userEmail !== newUserEmail) {
@@ -752,8 +752,8 @@ app.post('/changeUserInfo', async (req, res) => {
         console.error('Error updating user:', error);
         res.status(500).json({ error: "Помилка при оновленні даних користувача" });
     }
-
 });
+
 
 
 
