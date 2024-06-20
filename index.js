@@ -712,7 +712,6 @@ app.post('/changeUserInfo', async (req, res) => {
 
             let updateFields = {};
 
-            // Проверяем и добавляем к updateFields только те поля, которые изменились
             if (userName !== newUserName || userSurname !== newUserSurname) {
                 updateFields.nameAs = { nameAs: newUserName, surnameAs: newUserSurname };
             }
@@ -726,7 +725,6 @@ app.post('/changeUserInfo', async (req, res) => {
                 updateFields.email = newUserEmail;
             }
 
-            // Если есть поля для обновления, выполняем обновление
             if (Object.keys(updateFields).length > 0) {
                 const updateResult = await db.collection('users').updateOne(
                     { id: userId },
