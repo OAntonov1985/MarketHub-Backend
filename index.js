@@ -737,7 +737,10 @@ app.post('/changeUserInfo', async (req, res) => {
                     res.status(400).json({ error: "Не вдалося оновити дані користувача" });
                 }
             } else {
-                res.status(200).json({ message: "Немає змін для оновлення" });
+                res.status(200).json({
+                    status: 200,
+                    message: "Немає змін для оновлення"
+                });
             }
         } else {
             res.status(404).json({ error: 'Користувача не знайдено' });
