@@ -732,13 +732,16 @@ app.post('/changeUserInfo', async (req, res) => {
                 );
 
                 if (updateResult.modifiedCount > 0) {
-                    res.status(200).json({ message: "Дані користувача успішно оновлені" });
+                    res.status(200).json({
+                        status: 200,
+                        message: "Дані користувача успішно оновлені"
+                    });
                 } else {
                     res.status(400).json({ error: "Не вдалося оновити дані користувача" });
                 }
             } else {
                 res.status(200).json({
-                    status: 200,
+                    status: 0,
                     message: "Немає змін для оновлення"
                 });
             }
