@@ -424,7 +424,7 @@ app.delete('/goods/:id', (req, res) => {
 });
 
 // // /////////// Пошук товару  в хедері (повертає title, id, thumbnail, price, available) ///////////
-app.get('/search/:searchTerm', (req, res) => {
+app.get('/search/:searchTerm', async (req, res) => {
     const searchTerm = req.params.searchTerm;
 
     const titleQuery = { "title": { $regex: searchTerm, $options: "i" } };
@@ -432,27 +432,28 @@ app.get('/search/:searchTerm', (req, res) => {
 
     const searchPipeline = [
         { $match: { $or: [titleQuery, idQuery] } },
-        { $group: { _id: null, count: { $sum: 1 }, data: { $push: "$$ROOT" } } }
+        { $group: { _id: null, count: { $sum: 1 }, data: { $push: "$$ROOT" }, brands: { $addToSet: "$brend" } } }
     ];
 
-    db.collection('goods').aggregate(searchPipeline).toArray((err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-            return;
-        }
+    try {
+        const result = await db.collection('goods').aggregate(searchPipeline).toArray();
 
         if (result.length === 0) {
-            res.status(200).json({ total: 0, data: [] });
+            res.status(200).json({ total: 0, data: [], brands: [] });
             return;
         }
 
         const total = result[0].count;
         const data = result[0].data;
+        const brends = result[0].brands;
 
-        res.status(200).json({ total, data });
-    });
+        res.status(200).json({ total, data, brends });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Упс... Щось пішло не так..." });
+    }
 });
+
 
 // // /////////// Пошук товару  на сторінці пошуку (повертає весь item) ///////////
 app.get('/searchPage/:searchTerm', async (req, res) => {
