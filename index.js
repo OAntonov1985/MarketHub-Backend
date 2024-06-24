@@ -465,18 +465,14 @@ app.get('/searchPage/:searchTerm', async (req, res) => {
     const idQuery = { "id": { $regex: searchTerm, $options: "i" } };
 
     try {
-
         const searchPipeline = [
             { $match: { $or: [titleQuery, idQuery] } }
-
         ];
-
 
         let brands = req.query.brend ? Array.isArray(req.query.brend) ? req.query.brend : [req.query.brend] : [];
         if (brands.length > 0) {
             searchPipeline.unshift({ $match: { "brend": { $in: brands } } });
         }
-
 
         const min = req.query.min ? parseInt(req.query.min) : null;
         const max = req.query.max ? parseInt(req.query.max) : null;
@@ -487,30 +483,36 @@ app.get('/searchPage/:searchTerm', async (req, res) => {
             searchPipeline.unshift({ $match: { "price": { $lte: max } } });
         }
 
-
         const isAvailable = req.query.isAvailable ? req.query.isAvailable === 'true' : null;
         if (isAvailable !== null) {
             searchPipeline.unshift({ $match: { "available": isAvailable } });
         }
-
 
         const sortIndex = req.query.sortIndex === '1' ? 1 : req.query.sortIndex === '-1' ? -1 : null;
         if (sortIndex !== null) {
             searchPipeline.push({ $sort: { "price": sortIndex } });
         }
 
-        let data = await db.collection('goods').aggregate(searchPipeline).toArray();
+        // Виконання агрегації для отримання даних товарів та унікальних брендів
+        let [data, brandsData] = await Promise.all([
+            db.collection('goods').aggregate(searchPipeline).toArray(),
+            db.collection('goods').aggregate([...searchPipeline, { $group: { _id: "$brend" } }]).toArray()
+        ]);
+
         const total = data.length;
 
         const limitedData = data.slice(skip * limit, skip === 0 ? limit : (skip + 1) * limit);
 
+        // Отримання списку унікальних брендів
+        const uniqueBrands = brandsData.map(item => item._id);
 
-        res.status(200).json({ total, data: limitedData });
+        res.status(200).json({ total, data: limitedData, brands: uniqueBrands });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Упс... Щось пішло не так..." });
     }
 });
+
 
 
 app.post('/createnewgood', async (req, res) => {
