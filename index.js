@@ -649,7 +649,7 @@ app.post('/createNewUser', async (req, res) => {
 
 
 app.post('/newOrder', async (req, res) => {
-    const { userInfo, userBuyingGoods, userAdress, sellersIDArray } = req.body;
+    const { userInfo, userBuyingGoods, userAdress, sellersIDArray, orderStatus, orderTime } = req.body;
 
     try {
         const techInfo = await db.collection('technicalInfo').findOne({});
@@ -670,7 +670,10 @@ app.post('/newOrder', async (req, res) => {
                         orderNum: nextOrderNumber,
                         userInfo,
                         userAdress,
-                        userBuyingGoods: actualUserOrderGood
+                        userBuyingGoods: actualUserOrderGood,
+                        orderStatus: orderStatus,
+                        orderTime, orderTime
+
                     };
 
                     const updateResult = await db.collection('users').updateOne(
