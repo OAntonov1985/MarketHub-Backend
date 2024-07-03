@@ -760,6 +760,29 @@ app.post('/changeUserInfo', async (req, res) => {
     }
 });
 
+app.get('/getUserOrders/:id', (req, res) => {
+    const numberIDstring = req.params.id;
+    const numUserId = +numberIDstring;
+
+    db.collection('users')
+        .findOne({ id: numUserId })
+        .then((result) => {
+            if (!result) {
+                res.status(404).json({ error: "Юзера не знайдено" });
+                return;
+            }
+
+            const { userOrders } = result;
+            const responseData = userOrders;
+
+            res.status(200).json(responseData);
+        })
+        .catch((error) => {
+            console.error("Упс. щось пішло не так. Зверніться до розробників:");
+            res.status(500).json({ error: "Упс... Щось пішло не так..." });
+        });
+});
+
 
 
 
