@@ -790,6 +790,50 @@ app.get('/getUserOrders/:id/:skip', async (req, res) => {
 });
 
 
+app.get('/setOrderStatus/:id/:orderNum/:orderStatus', async (req, res) => {
+    const numUserId = parseInt(req.params.id);
+    const orderNum = parseInt(req.params.orderNum); // Номер замовлення
+    const orderStatus = req.params.orderStatus;
+
+    try {
+        const user = await db.collection('users').findOne({ id: numUserId });
+
+        if (!user || !user.userOrders) {
+            res.status(404).json({ error: "Користувача не знайдено або у користувача немає замовлень" });
+            return;
+        }
+
+
+        const orderToUpdate = user.userOrders.find(order => order.orderNum === orderNum);
+
+        if (!orderToUpdate) {
+            res.status(404).json({ error: `Замовлення з номером ${orderNum} не знайдено` });
+            return;
+        }
+
+        orderToUpdate.orderStatus = orderStatus;
+
+
+        await db.collection('users').updateOne(
+            { id: numUserId, "userOrders.orderNum": orderNum },
+            { $set: { "userOrders.$.orderStatus": orderStatus } }
+        );
+
+        const updatedUser = await db.collection('users').findOne({ id: numUserId });
+        const updatedOrders = updatedUser.userOrders;
+
+        res.status(200).json({
+            message: `Статус замовлення з номером ${orderNum} оновлено на ${orderStatus}`,
+            data: updatedOrders
+        });
+
+    } catch (error) {
+        console.error("Помилка при оновленні статусу замовлення:", error);
+        res.status(500).json({ error: "Упс... Щось пішло не так..." });
+    }
+});
+
+
 
 
 
