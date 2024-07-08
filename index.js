@@ -760,28 +760,36 @@ app.post('/changeUserInfo', async (req, res) => {
     }
 });
 
-app.get('/getUserOrders/:id', (req, res) => {
+app.get('/getUserOrders/:id/:skip', async (req, res) => {
     const numberIDstring = req.params.id;
     const numUserId = +numberIDstring;
+    const skip = parseInt(req.params.skip) * 6;
+    const limit = 6;
 
-    db.collection('users')
-        .findOne({ id: numUserId })
-        .then((result) => {
-            if (!result) {
-                res.status(404).json({ error: "Юзера не знайдено" });
-                return;
-            }
+    try {
+        const user = await db.collection('users').findOne({ id: numUserId });
 
-            const { userOrders } = result;
-            const responseData = userOrders;
+        if (!user || !user.userOrders) {
+            res.status(404).json({ error: "Юзера не знайдено або у користувача немає замовлень" });
+            return;
+        }
 
-            res.status(200).json(responseData);
-        })
-        .catch((error) => {
-            console.error("Упс. щось пішло не так. Зверніться до розробників:");
-            res.status(500).json({ error: "Упс... Щось пішло не так..." });
-        });
+        const total = user.userOrders.length;
+        const userOrders = user.userOrders.slice(skip, skip + limit);
+
+        const responseData = {
+            total: total,
+            orders: userOrders
+        };
+
+        res.status(200).json(responseData);
+    } catch (error) {
+        console.error("Упс. щось пішло не так. Зверніться до розробників:", error);
+        res.status(500).json({ error: "Упс... Щось пішло не так..." });
+    }
 });
+
+
 
 
 
