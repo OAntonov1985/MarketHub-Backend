@@ -760,11 +760,12 @@ app.post('/changeUserInfo', async (req, res) => {
     }
 });
 
-app.get('/getUserOrders/:id/:skip', async (req, res) => {
+app.get('/getUserOrders/:id/:skip/:orderFilter', async (req, res) => {
     const numberIDstring = req.params.id;
     const numUserId = +numberIDstring;
     const skip = parseInt(req.params.skip) * 6;
     const limit = 6;
+    const orderFilter = req.params.orderFilter;
 
     try {
         const user = await db.collection('users').findOne({ id: numUserId });
@@ -774,8 +775,14 @@ app.get('/getUserOrders/:id/:skip', async (req, res) => {
             return;
         }
 
-        const total = user.userOrders.length;
-        const userOrders = user.userOrders.slice(skip, skip + limit);
+        let filteredOrders = user.userOrders;
+
+        if (orderFilter && orderFilter !== 'null') {
+            filteredOrders = filteredOrders.filter(order => order.orderStatus === orderFilter);
+        }
+
+        const total = filteredOrders.length;
+        const userOrders = filteredOrders.slice(skip, skip + limit);
 
         const responseData = {
             total: total,
@@ -790,10 +797,12 @@ app.get('/getUserOrders/:id/:skip', async (req, res) => {
 });
 
 
+
 app.get('/setOrderStatus/:id/:orderNum/:orderStatus', async (req, res) => {
     const numUserId = parseInt(req.params.id);
-    const orderNum = parseInt(req.params.orderNum); // Номер замовлення
+    const orderNum = parseInt(req.params.orderNum);
     const orderStatus = req.params.orderStatus;
+
 
     try {
         const user = await db.collection('users').findOne({ id: numUserId });
@@ -820,12 +829,8 @@ app.get('/setOrderStatus/:id/:orderNum/:orderStatus', async (req, res) => {
         );
 
         const updatedUser = await db.collection('users').findOne({ id: numUserId });
-        const updatedOrders = updatedUser.userOrders;
 
-        res.status(200).json({
-            message: `Статус замовлення з номером ${orderNum} оновлено на ${orderStatus}`,
-            data: updatedOrders
-        });
+        res.status(200).json({ message: `Статус замовлення з номером ${orderNum} оновлено на ${orderStatus}` });
 
     } catch (error) {
         console.error("Помилка при оновленні статусу замовлення:", error);
